@@ -1,21 +1,26 @@
-package com.fyrstain.fhir.security.core.r4;
+package com.fyrstain.fhir.security.core;
 
-import com.fyrstain.fhir.security.core.PermissionEvaluator;
+import com.fyrstain.fhir.security.core.model.FhirResponse;
 import com.fyrstain.fhir.security.core.model.PermissionOperation;
 import com.fyrstain.fhir.security.core.model.PermissionRule;
-import com.fyrstain.fhir.security.core.r4.SimpleR4PermissionEvaluator;
 import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Permission;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.fyrstain.fhir.security.core.PermissionHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PermissionCompilerTest {
 
-    private final PermissionEvaluator evaluator = new SimpleR4PermissionEvaluator();
+    private final PermissionEvaluator evaluator = new SimplePermissionEvaluator() {
+        @Override
+        public FhirResponse filterResponse(FhirResponse response, List<PermissionRule> rules) {
+            return null;
+        }
+    };
 
     @Test
     void compileRules_shouldIgnoreInactivePermissions() {
@@ -35,7 +40,7 @@ class PermissionCompilerTest {
         rule.addActivity(activity("read", "search"));
 
         // no deny expressions because allow = true
-        rule.addData(dataForInstance("Patient", null));
+        rule.addData(dataForInstance("Patient", null, null));
 
         p.addRule(rule);
 
@@ -57,7 +62,7 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule = newRule(false);
 
         rule.addActivity(activity("read"));
-        rule.addData(dataForInstance("Observation", "value.where(code = 'secret')"));
+        rule.addData(dataForInstance("Observation", "value.where(code = 'secret')", null));
 
         p.addRule(rule);
 
@@ -99,8 +104,8 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule = newRule(false);
         rule.addActivity(activity("read"));
 
-        rule.addData(dataForInstance("Patient", "name.given"));
-        rule.addData(dataForInstance("Encounter", "period.start"));
+        rule.addData(dataForInstance("Patient", "name.given", null));
+        rule.addData(dataForInstance("Encounter", "period.start", null));
 
         p.addRule(rule);
 
@@ -122,7 +127,7 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule = newRule(true);
         rule.addActivity(activity("read"));
 
-        rule.addData(dataForInstance("Patient", null));
+        rule.addData(dataForInstance("Patient", null, "identifier=system|"));
         p1.addRule(rule);
 
         // ---------- Permission 2 (ACTIVE, DENY with FHIRPath) ----------
@@ -130,7 +135,7 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule2 = newRule(false);
         rule2.addActivity(activity("read"));
 
-        rule2.addData(dataForInstance("Patient", "name.given"));
+        rule2.addData(dataForInstance("Patient", "name.given", null));
 
         p2.addRule(rule2);
 
@@ -147,11 +152,50 @@ class PermissionCompilerTest {
         assertEquals("Patient", allowRule.getResourceType());
         assertTrue(allowRule.getOperations().contains(PermissionOperation.READ));
         assertTrue(allowRule.getBlacklistExpressions().isEmpty()); // no expression for PERMIT
+        assertEquals(1, allowRule.getSearchExpressions().size());
+        assertTrue(allowRule.getSearchExpressions().contains("identifier=system|"));
 
         // DENY rule with FHIRPath
         assertEquals("Patient", denyRule.getResourceType());
         assertTrue(denyRule.getOperations().contains(PermissionOperation.READ));
         assertEquals(List.of("name.given"), denyRule.getBlacklistExpressions());
+    }
+
+    @Test
+    void compileRules_shouldHandleMultiplePermissionResources2() {
+        // ---------- Permission 1 (ACTIVE, PERMIT) ----------
+        Permission p1 = buildPermission(true);
+        Permission.RuleComponent rule = newRule(true);
+        rule.addActivity(activity("read"));
+
+        rule.addData(dataForInstance("Patient", null, "identifier=system|"));
+        p1.addRule(rule);
+
+        // ---------- Permission 2 (ACTIVE, DENY with FHIRPath) ----------
+        Permission p2 = buildPermission(true);
+        Permission.RuleComponent rule2 = newRule(true);
+        rule2.addActivity(activity("read"));
+
+        rule2.addData(dataForInstance("Patient", null, "active=true"));
+
+        p2.addRule(rule2);
+
+        // ---------- EXECUTE ----------
+        List<PermissionRule> rules = evaluator.compileRules(List.of(p1, p2));
+
+        // ---------- ASSERT ----------
+        assertEquals(2, rules.size());
+
+        List<PermissionRule> allowRule = rules.stream().filter(PermissionRule::isAllow).collect(Collectors.toList());
+        assertTrue(rules.stream().allMatch(PermissionRule::isAllow));
+
+        // PERMIT rule
+        assertEquals(2, allowRule.size());
+        assertTrue(allowRule.stream().allMatch(r -> "Patient".equals(r.getResourceType())));
+        assertTrue(allowRule.stream().allMatch(r -> r.getOperations().contains(PermissionOperation.READ)));
+        assertTrue(allowRule.stream().allMatch(r -> r.getBlacklistExpressions().isEmpty())); // no expression for PERMIT
+        assertTrue(allowRule.get(0).getSearchExpressions().contains("identifier=system|"));
+        assertTrue(allowRule.get(1).getSearchExpressions().contains("active=true"));
     }
 
     @Test
@@ -161,7 +205,7 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule = newRule(true);
         rule.addActivity(activity("read"));
 
-        rule.addData(dataForInstance("Observation", null));
+        rule.addData(dataForInstance("Observation", null, null));
         p1.addRule(rule);
 
         // -------- DENY rule --------
@@ -169,7 +213,7 @@ class PermissionCompilerTest {
         Permission.RuleComponent rule2 = newRule(false);
         rule2.addActivity(activity("read"));
 
-        rule2.addData(dataForInstance("Observation", "value"));
+        rule2.addData(dataForInstance("Observation", "value", null));
 
         p2.addRule(rule2);
 

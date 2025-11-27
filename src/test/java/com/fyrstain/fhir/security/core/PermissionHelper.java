@@ -23,7 +23,7 @@ public class PermissionHelper {
     }
 
     public static Permission.RuleDataComponent dataForInstance(
-            String resourceType, String fhirPath
+            String resourceType, String fhirPath, String search
     ) {
         Permission.RuleDataComponent data = new Permission.RuleDataComponent();
 
@@ -38,6 +38,13 @@ public class PermissionHelper {
             Expression exp = new Expression();
             exp.setLanguage("text/fhirpath");
             exp.setExpression(fhirPath);
+            data.setExpression(exp);
+        }
+
+        if (search != null) {
+            Expression exp = new Expression();
+            exp.setLanguage("application/x-fhir-query");
+            exp.setExpression(search);
             data.setExpression(exp);
         }
 

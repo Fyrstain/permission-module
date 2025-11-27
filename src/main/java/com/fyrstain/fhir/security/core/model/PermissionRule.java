@@ -11,20 +11,17 @@ public class PermissionRule {
     private final EnumSet<PermissionOperation> operations; // e.g. READ, UPDATE, DELETE, CREATE
     private final boolean allow; // true = allow, false = deny (if you plan to support deny rules later)
 
+    private final List<String> searchExpressions;
     private final List<String> blacklistExpressions;
-    //TODO
-//    conditions (FHIRPath expressions or SearchParameters)
-//    fieldFilters (paths to remove from responses)
-//    scope (organization / subject-level)
-//    purposeOfUse constraints
-//    deny rules (so you can evaluate allow/deny precedence)
 
 
-    public PermissionRule(String resourceType, EnumSet<PermissionOperation> operations, boolean allow, List<String> blacklistExpressions) {
+    public PermissionRule(String resourceType, EnumSet<PermissionOperation> operations, boolean allow,
+                          List<String> blacklistExpressions, List<String> searchExpressions) {
         this.resourceType = resourceType;
         this.operations = operations;
         this.allow = allow;
         this.blacklistExpressions = blacklistExpressions;
+        this.searchExpressions = searchExpressions;
     }
 
     public boolean allows(String resourceType, PermissionOperation op) {
@@ -39,6 +36,14 @@ public class PermissionRule {
 
     public List<String> getBlacklistExpressions() {
         return blacklistExpressions;
+    }
+
+    public List<String> getSearchExpressions() {
+        return searchExpressions;
+    }
+
+    public boolean hasSearchExpressions() {
+        return searchExpressions != null && !searchExpressions.isEmpty();
     }
 
     public String getResourceType() {

@@ -40,8 +40,11 @@ public class FhirAuthorizationEngine {
         List<PermissionRule> rules = getRules(context);
 
         //Build and return the evaluation result.
-        return new RequestEvaluationResult(evaluator.canPerform(request.getResourceType(), request.getOperation(), rules),
-                request.getSearchParameters(), rules, null);
+        return new RequestEvaluationResult(
+                evaluator.canPerform(request.getResourceType(), request.getOperation(), rules),
+                evaluator.updateSearchParameters(request.getSearchParameters(), rules),
+                rules,
+                null);
     }
 
     public FhirResponse filterResponse(

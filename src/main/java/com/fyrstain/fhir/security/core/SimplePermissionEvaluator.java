@@ -42,7 +42,9 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
             for (Permission.RuleComponent rule : ((Permission) resource).getRule()) {
                 boolean allow = rule.getType().equals(PERMIT);
 
-                Map<String, List<String>> resourceTypes = new HashMap<>();
+                Map<String, List<String>> filters = new HashMap<>();
+                Map<String, List<String>> searches = new HashMap<>();
+
                 rule.getData().forEach(data -> {
                     data.getResource().forEach(dataResource -> {
                         //Only instance is supported here
@@ -54,7 +56,23 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
 
                         //Add resource types as displayed in the resource reference
                         Optional.ofNullable(dataResource.getReference().getDisplay())
-                                .ifPresent(type -> resourceTypes.putIfAbsent(type, new ArrayList<>()));
+                                .ifPresent(type -> {
+                                    filters.putIfAbsent(type, new ArrayList<>());
+                                    searches.putIfAbsent(type, new ArrayList<>());
+                                });
+
+                        //Only support whitelisting instances for now.
+                        //Only support x-fhir-queries for now.
+                        if (allow
+                                && dataResource.getReference().getDisplay() != null
+                                && data.hasExpression()
+                                && data.getExpression().hasLanguage()
+                                && "application/x-fhir-query".equals(data.getExpression().getLanguage())) {
+                            List<String> expressions = searches.get(dataResource.getReference().getDisplay());
+                            if (expressions != null && data.getExpression().hasExpression()) {
+                                expressions.add(data.getExpression().getExpression());
+                            }
+                        }
 
                         //Only support blacklisting elements for now.
                         //Only support FHIRPath for now.
@@ -63,7 +81,7 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
                                 && data.hasExpression()
                                 && data.getExpression().hasLanguage()
                                 && "text/fhirpath".equals(data.getExpression().getLanguage())) {
-                            List<String> expressions = resourceTypes.get(dataResource.getReference().getDisplay());
+                            List<String> expressions = filters.get(dataResource.getReference().getDisplay());
                             if (expressions != null && data.getExpression().hasExpression()) {
                                 expressions.add(data.getExpression().getExpression());
                             }
@@ -106,11 +124,38 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
                 }
 
                 //Create a permission rule for operations for each resource type found in rule.data
-                resourceTypes.forEach((resourceType, expressions) ->
-                        rules.add(new PermissionRule(resourceType, operations, allow, expressions)));
+                filters.forEach((resourceType, expressions) ->
+                        rules.add(new PermissionRule(resourceType, operations, allow,
+                                expressions, searches.get(resourceType) != null ? searches.get(resourceType) : List.of())));
             }
         }
         return rules;
+    }
+
+    @Override
+    public Map<String, List<String>> updateSearchParameters(Map<String, List<String>> searchParameters, List<PermissionRule> rules) {
+        HashMap<String, List<String>> updatedSearchParameters = searchParameters != null ? new HashMap<>(searchParameters) : new HashMap<>();
+
+        // Only support whitelist for now
+        rules.stream().filter(PermissionRule::isAllow)
+                .filter(PermissionRule::hasSearchExpressions)
+                .flatMap(r -> r.getSearchExpressions().stream())
+                .forEach(expression -> {
+                    if (expression != null && !expression.isEmpty()) {
+                        String[] pairs = expression.split("&");
+
+                        for (String pair : pairs) {
+                            String[] parts = pair.split("=", 2); // only split on first '='
+                            String key = parts[0].trim();
+                            String value = parts.length > 1 ? parts[1].trim() : "";
+                            if (!value.isEmpty()) {
+                                String[] spValues = value.split(",");
+                                updatedSearchParameters.computeIfAbsent(key, k -> new ArrayList<>()).addAll(List.of(spValues));
+                            }
+                        }
+                    }
+                });
+        return updatedSearchParameters;
     }
 
     /**

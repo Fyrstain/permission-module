@@ -1,7 +1,5 @@
 package com.fyrstain.fhir.security.core;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
 import com.fyrstain.fhir.security.core.model.PermissionOperation;
 import com.fyrstain.fhir.security.core.model.PermissionRule;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -90,8 +88,6 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
                 });
 
                 EnumSet<PermissionOperation> operations = EnumSet.noneOf(PermissionOperation.class);
-
-                logger.warn(FhirContext.forCached(FhirVersionEnum.R5).newJsonParser().encodeToString(resource));
 
                 // Get all codes from rule.activity.action to define restricted operations
                 for (CodeType code : rule.getActivity().stream()

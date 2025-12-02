@@ -10,6 +10,7 @@ import org.hl7.fhir.r5.context.SimpleWorkerContext;
 import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
 import org.hl7.fhir.r5.model.Base;
 import org.hl7.fhir.r5.model.Bundle;
+import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,11 @@ public class FilterUtils {
      * @param expressions List of FHIRPath expressions to remove
      */
     public static void removeFieldsByExpression(IBaseResource resource, List<String> expressions) {
-        if (resource == null || expressions == null) return;
+        if (resource == null || expressions == null || expressions.isEmpty()) return;
+
+        if (resource instanceof DomainResource) {
+            ((DomainResource) resource).setText(null);
+        }
 
         // Handle bundles recursively
         if (resource instanceof Bundle) {

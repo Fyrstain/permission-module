@@ -129,12 +129,13 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
     }
 
     @Override
-    public Map<String, List<String>> updateSearchParameters(Map<String, List<String>> searchParameters, List<PermissionRule> rules) {
+    public Map<String, List<String>> updateSearchParameters(String resourceType, Map<String, List<String>> searchParameters, List<PermissionRule> rules) {
         HashMap<String, List<String>> updatedSearchParameters = searchParameters != null ? new HashMap<>(searchParameters) : new HashMap<>();
 
         // Only support whitelist for now
         rules.stream().filter(PermissionRule::isAllow)
                 .filter(PermissionRule::hasSearchExpressions)
+                .filter(p -> p.getResourceType().equals(resourceType))
                 .flatMap(r -> r.getSearchExpressions().stream())
                 .forEach(expression -> {
                     if (expression != null && !expression.isEmpty()) {

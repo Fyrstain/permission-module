@@ -28,11 +28,11 @@ public class UpdateSearchParametersTest {
         Map<String, List<String>> searchParameters = new HashMap<>();
 
         List<PermissionRule> rules = List.of(
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
         null, List.of("identifier=system|code&name=Toto"))
         );
 
-        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters(searchParameters, rules);
+        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters("Patient", searchParameters, rules);
 
         assertNotNull(updatedSearchParameters);
         assertEquals(2, updatedSearchParameters.size());
@@ -45,11 +45,11 @@ public class UpdateSearchParametersTest {
         Map<String, List<String>> searchParameters = new HashMap<>();
 
         List<PermissionRule> rules = List.of(
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("identifier=system|code", "name=Toto"))
         );
 
-        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters(searchParameters, rules);
+        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters("Patient", searchParameters, rules);
 
         assertNotNull(updatedSearchParameters);
         assertEquals(2, updatedSearchParameters.size());
@@ -62,13 +62,13 @@ public class UpdateSearchParametersTest {
         Map<String, List<String>> searchParameters = new HashMap<>();
 
         List<PermissionRule> rules = List.of(
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("identifier=system|code")),
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("name=Toto"))
         );
 
-        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters(searchParameters, rules);
+        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters("Patient", searchParameters, rules);
 
         assertNotNull(updatedSearchParameters);
         assertEquals(2, updatedSearchParameters.size());
@@ -81,13 +81,13 @@ public class UpdateSearchParametersTest {
         Map<String, List<String>> searchParameters = new HashMap<>();
 
         List<PermissionRule> rules = List.of(
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("identifier=system|code")),
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("identifier=system2|code2"))
         );
 
-        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters(searchParameters, rules);
+        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters("Patient", searchParameters, rules);
 
         assertNotNull(updatedSearchParameters);
         assertEquals(1, updatedSearchParameters.size());
@@ -99,11 +99,11 @@ public class UpdateSearchParametersTest {
         Map<String, List<String>> searchParameters = new HashMap<>();
 
         List<PermissionRule> rules = List.of(
-                new PermissionRule("Parent", null, true,
+                new PermissionRule("Patient", null, true,
                         null, List.of("identifier=system|code&name=Toto,Tata,Tutu"))
         );
 
-        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters(searchParameters, rules);
+        Map<String, List<String>> updatedSearchParameters = evaluator.updateSearchParameters("Patient", searchParameters, rules);
 
         assertNotNull(updatedSearchParameters);
         assertEquals(2, updatedSearchParameters.size());

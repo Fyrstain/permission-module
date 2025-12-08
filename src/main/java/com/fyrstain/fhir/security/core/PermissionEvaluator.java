@@ -11,6 +11,6 @@ import java.util.Map;
 public interface PermissionEvaluator {
     List<PermissionRule> compileRules(List<IBaseResource> permissionResources);
     boolean canPerform(String resourceType, PermissionOperation operation, List<PermissionRule> rules);
-    Map<String, List<String>> updateSearchParameters(Map<String, List<String>>searchParameters, List<PermissionRule> rules);
+    Map<String, List<String>> updateSearchParameters(String resourceType, Map<String, List<String>>searchParameters, List<PermissionRule> rules);
     FhirResponse filterResponse(FhirResponse response, List<PermissionRule> rules);
 }

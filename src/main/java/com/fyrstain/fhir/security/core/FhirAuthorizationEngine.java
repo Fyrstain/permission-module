@@ -42,7 +42,7 @@ public class FhirAuthorizationEngine {
         //Build and return the evaluation result.
         return new RequestEvaluationResult(
                 evaluator.canPerform(request.getResourceType(), request.getOperation(), rules),
-                evaluator.updateSearchParameters(request.getSearchParameters(), rules),
+                evaluator.updateSearchParameters(request.getResourceType(), request.getSearchParameters(), rules),
                 rules,
                 null);
     }

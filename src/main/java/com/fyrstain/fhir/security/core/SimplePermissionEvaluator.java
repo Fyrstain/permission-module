@@ -161,8 +161,8 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
     @Override
     public boolean canPerform(String resourceType, PermissionOperation op, List<PermissionRule> rules) {
         //TODO See what is the default behavior (maybe can be configured) ? Do we allow-all or deny-all by default
-        if(rules.isEmpty()) {
-            return true;
+        if (rules.isEmpty()) {
+            return false;
         }
         return rules.stream().noneMatch(r -> r.denies(resourceType, op)) && rules.stream().anyMatch(r -> r.allows(resourceType, op));
     }

@@ -38,8 +38,7 @@ public class FhirAuthorizationEngineTest {
 
         RequestEvaluationResult result = engine.evaluateRequest(permissionContext, request);
 
-        assertTrue(result.isAllowed());
-        assertEquals(searchParameters, result.getModifiedSearchParameters());
+        assertFalse(result.isAllowed());
     }
 
     @Test

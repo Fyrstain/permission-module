@@ -20,6 +20,8 @@ public class FhirRequest {
             case GET:
                 if (resourceId != null) {
                     return PermissionOperation.READ;
+                } else if("metadata".equals(operationName)) {
+                    return PermissionOperation.METADATA;
                 }
                 return PermissionOperation.SEARCH;
             case POST:

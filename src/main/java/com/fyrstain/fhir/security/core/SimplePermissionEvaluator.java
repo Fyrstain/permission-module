@@ -96,6 +96,9 @@ public abstract class SimplePermissionEvaluator implements PermissionEvaluator {
                         .map(c -> new CodeType(c.getCode()))
                         .collect(Collectors.toList())) {
                     switch (code.getValue().toLowerCase()) {
+                        case "metadata":
+                            operations.add(PermissionOperation.METADATA);
+                            break;
                         case "read":
                             operations.add(PermissionOperation.READ);
                             break;
